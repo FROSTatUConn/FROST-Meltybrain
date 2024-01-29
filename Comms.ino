@@ -1,4 +1,8 @@
+// Bulk of code from SWallen Hardware
+
 #include <PPMReader.h>
+
+#DEFINE RECEIVER_VAL_CEILING 1600
 
 // Initialize a PPMReader on digital pin 3 with 6 expected channels.
 byte interruptPin = 3;
@@ -51,9 +55,9 @@ void receiveSignal() {
   byte tankOverride = (stat & 0x04) > 0;//this set the throttle to 0, forcing the bot into tank mode. Faster than adjusting the throttle pot.
 
   //thumbstick X
-  thumbX = map((((uint16_t) packet[1]) << 8) | ((uint16_t) packet[2]), 0, 1024, -100, 100);
+  thumbX = map((((uint16_t) packet[1]) << 8) | ((uint16_t) packet[2]), 0, RECEIVER_VAL_CEILING, -100, 100);
   //thumbstick Y
-  thumbY = map((((uint16_t) packet[3]) << 8) | ((uint16_t) packet[4]), 0, 1024, -100, 100);
+  thumbY = map((((uint16_t) packet[3]) << 8) | ((uint16_t) packet[4]), 0, RECEIVER_VAL_CEILING, -100, 100);
   //throttle
   if(tankOverride) {
     throt = 0;
