@@ -62,7 +62,7 @@ void setup() {
   Serial.begin(9600);
 
   // initialize the filter with alpha value
-  filterInit(&x_filter, 0.37, true); // corresponds to 63%, (e-1)/e
+  filterInit(&x_filter, 0.37, true); 
 }
 
 void loop() {
