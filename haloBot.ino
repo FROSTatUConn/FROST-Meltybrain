@@ -103,6 +103,7 @@ void setMotorSpeed(int motor, int spd) {
   //apply a deadband
   if(spd < 5 && spd > -5) spd = 0;
 
+  // reverse the direction of the motor because flipped
   if(motor == motor1) spd *= -1;
 
   analogWrite(motor, map(spd, -100, 100, 64, 128));
