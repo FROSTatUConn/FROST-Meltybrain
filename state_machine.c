@@ -6,13 +6,14 @@ void kill_state(state_t* state) {
   // TODO: set the motor speed to 0, pull disable pins
   // block the MB from doing anything else
   // swallenhardware uses " digitalWrite(enablePin, HIGH); " for blocking/disabling
-  while (1) 0;
+  while (1) 0;  // lets the run to reset
 }
 
 void idle_state(state_t* state) {
   *state = IDLE;
   // TODO: set the motor speed to 0, no blocking
   // disable movement
+  
 }
 
 void tank_state(state_t* state) {
