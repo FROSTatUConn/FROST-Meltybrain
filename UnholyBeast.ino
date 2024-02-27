@@ -1,8 +1,21 @@
 // Bulk of code from SWallen Hardware
 
 #include <IBusBM.h>
+#include <stdint.h>
+#include <avr/wdt.h>
+#include <avr/interrupt.h>
+#include "state_machine.h"
 
 #DEFINE RECEIVER_VAL_CEILING 2000
+
+#define LED LED_BUILTIN
+
+// Motor A connections
+#define in1 11;
+#define in2 10;
+// Motor B connections
+#define in3 6;
+#define in4 5;
 
 // Initialize a PPMReader on digital pin 3 with 6 expected channels.
 byte interruptPin = 3;
@@ -14,13 +27,40 @@ IBusBM IBus;    // IBus object
 int val1;  // Channel 0 Right Stick - Left/Right (all values 1000->2000)
 int val2;  // Channel 1 Right Stick - Up/Down
 int val3;  // Channel 2 Left Stick - Up/Down (throttle for planes)
-int val4;  // Channel 3 Left Stick - Right/Left
+int val4;  // Channel 3 Left Stick - Left/Right
 int val5;  // Channel 4 Upper Left Knob - CounterCW to Clockwise
 int val6;  // Channel 5 Upper Right Knob - CounterCW to Clockwise
+int accel;
 
 void setup() {
   IBus.begin(Serial);    // iBUS object connected to serial0 RX pin
   Serial.begin(115200);           // set up Serial library at 9600 bps 
+
+
+
+
+
+  // Set all the motor control pins to outputs
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  
+  // Turn off motors - Initial state
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+
+
+  wdt_disable();
+  delay(5000);
+  pinMode(LED, OUTPUT);
+
+  //wdt_enable(WDTO_4S);
+  //wdt_interrupt_enable();
+  //sei();
+  Serial.println("WDT primed");
 }
 
 void loop() {
@@ -32,9 +72,19 @@ void loop() {
   val5 = IBus.readChannel(4) - 1000;
   val6 = IBus.readChannel(5) - 1000;
 
+  // Left motor control
 
+  if (val3 >= 500) {
+    analogWrite(in1, LOW);
+    accel = map(val3-500, 0, 500, 0, 255);
+    analogWrite(in2, accel);
+  } else if (val3 < 500) {
+    analogWrite(in2, LOW);
+    accel = map(val3, 0, 499, 0, 255);
+    analogWrite(in1, accel);
+  }
 
-  
+  // Right motor control
 
 
 
