@@ -4,18 +4,18 @@
 #include <stdint.h>
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
-#include "state_machine.h"
 
-#DEFINE RECEIVER_VAL_CEILING 2000
+#define RECEIVER_VAL_CEILING 2000
+#define DEADZONE_CONST 50
 
 #define LED LED_BUILTIN
 
 // Motor A connections
-#define in1 11;
-#define in2 10;
+#define in1 11
+#define in2 10
 // Motor B connections
-#define in3 6;
-#define in4 5;
+#define in3 6
+#define in4 5
 
 // Initialize a PPMReader on digital pin 3 with 6 expected channels.
 byte interruptPin = 3;
@@ -31,6 +31,8 @@ int val4;  // Channel 3 Left Stick - Left/Right
 int val5;  // Channel 4 Upper Left Knob - CounterCW to Clockwise
 int val6;  // Channel 5 Upper Right Knob - CounterCW to Clockwise
 int accel;
+float leftWheelAccel;
+float rightWheelAccel;
 
 void setup() {
   IBus.begin(Serial);    // iBUS object connected to serial0 RX pin
@@ -72,19 +74,76 @@ void loop() {
   val5 = IBus.readChannel(4) - 1000;
   val6 = IBus.readChannel(5) - 1000;
 
-  // Left motor control
 
-  if (val3 >= 500) {
-    analogWrite(in1, LOW);
-    accel = map(val3-500, 0, 500, 0, 255);
-    analogWrite(in2, accel);
-  } else if (val3 < 500) {
-    analogWrite(in2, LOW);
-    accel = map(val3, 0, 499, 0, 255);
-    analogWrite(in1, accel);
+
+  // Acceleration Calculations
+    
+  if (val4 > 500 + DEADZONE_CONST) {
+    // If the turn direction is to the right
+
+    leftWheelAccel = ((((((float)val4) / 1000))) * 255);
+    rightWheelAccel = ((((1.0 - (((float)val4) / 1000)))) * 255);
+
+  } else if (val4 < 500 - DEADZONE_CONST) {
+    // If the turn direction is to the left
+
+    leftWheelAccel = ((((((float)val4) / 1000))) * 255);
+    rightWheelAccel = ((((1.0 - (((float)val4) / 1000)))) * 255);
+
   }
 
-  // Right motor control
+  Serial.print("Left_motor:");
+  Serial.println(leftWheelAccel);
+
+  Serial.print("Right_motor:");
+  Serial.println(rightWheelAccel);
+
+  
+
+  if (val3 > 500 + DEADZONE_CONST) {
+    // Forward Acceleration Control    
+
+    // Left Motor
+    analogWrite(in1, LOW);
+    analogWrite(in2, leftWheelAccel);
+
+    // Right Motor
+
+    analogWrite(in4, LOW);
+    analogWrite(in3, rightWheelAccel);
+
+
+  } else if (val3 < 500 -) {
+    // Backward Acceleration Control
+
+    // Left Motor
+    analogWrite(in2, LOW);
+    analogWrite(in1, leftWheelAccel);
+
+    // Right Motor
+    analogWrite(in3, LOW);
+    analogWrite(in4, rightWheelAccel);
+
+  } else {
+    if (val3 < 510 && val4 > 510) {
+      // Spin in place right, calculate the proportion of the stick to the right of center
+
+      leftWheelAccel = ((val4 - 500) / 500) * 255;
+      rightWheelAccel = 0;
+
+      analogWrite(in1, LOW);
+      analogWrite(in2, leftWheelAccel);
+
+    } else if (val3 < 510 && val4 < 490) {
+      // Spin in place to the left, calculate the proportion of the stick to the left of center
+
+      leftWheelAccel = 0;
+      rightWheelAccel = (((500 - val4) / 500) * 255);
+
+      analogWrite(in4, LOW);
+      analogWrite(in2, leftWheelAccel);
+    }
+  }
 
 
 
@@ -197,5 +256,5 @@ void loop() {
   packet[6] = (byte) (zAccel & 0x00FF);
 
   Serial1.write(packet, 7);
-  //*/
-}
+  //
+}*/
