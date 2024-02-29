@@ -5,10 +5,17 @@
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
 
+// Miscellaneous definitions
+
 #define RECEIVER_VAL_CEILING 2000
 #define DEADZONE_CONST 75
-
 #define LED LED_BUILTIN
+
+// Mode definitions
+
+#define IDLE_MODE 0
+#define TANK_MODE 1
+#define SPIN_MODE 2
 
 // Motor A connections
 #define in1 11
@@ -28,12 +35,15 @@ int val1;  // Channel 0 Right Stick - Left/Right (all values 1000->2000)
 int val2;  // Channel 1 Right Stick - Up/Down
 int val3;  // Channel 2 Left Stick - Up/Down (throttle for planes)
 int val4;  // Channel 3 Left Stick - Left/Right
-int val5;  // Channel 4 Upper Left Knob - CounterCW to Clockwise
-int val6;  // Channel 5 Upper Right Knob - CounterCW to Clockwise
+int val5 = 0;  // Channel 4 Upper Left Knob - CounterCW to Clockwise
+int val6 = 0;  // Channel 5 Upper Right Knob - CounterCW to Clockwise
 int accel;
 float leftWheelAccel;
 float rightWheelAccel;
-int safe;
+
+// The safety is on by default
+
+int mode = IDLE_MODE;
 
 void setup() {
   IBus.begin(Serial);    // iBUS object connected to serial0 RX pin
@@ -88,91 +98,111 @@ void loop() {
   Serial.print("ch5:");
   Serial.println(val6);
 
-if (!((val1 == -1000 && val6 != -1000) && val5 == 1000 && val6 == 1000)) {
-  // Printout for safety
+  // !((val1 == -1000 && val6 != -1000) && val5 == 1000 && val6 == 1000)
 
-  safe = 1;
-  Serial.print("safety:");
-  Serial.println(safe);
+  if ((val5 == 0 && val6 == 0) || !(val5 == 1000 && val6 == 1000)) {
+    // Sets mode to idle if any of the conditions are not met
+
+    mode = IDLE_MODE;
+
+    // Printout for mode
+
+    Serial.print("mode:");
+    Serial.println(mode);
 
 
-  // Acceleration Calculations
-  
-  if (val4 > 500 + DEADZONE_CONST) {
-    // If the turn direction is to the right
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
+    
+  } else {
+    // If everything is in order, mode is set to TANK_MDOE, which means that the safety is off
 
-    leftWheelAccel = ((((((float)val4) / 1000))) * 255);
-    rightWheelAccel = ((((1.0 - (((float)val4) / 1000)))) * 255);
-
-  } else if (val4 < 500 - DEADZONE_CONST) {
-    // If the turn direction is to the left
-
-    leftWheelAccel = ((((((float)val4) / 1000))) * 255);
-    rightWheelAccel = ((((1.0 - (((float)val4) / 1000)))) * 255);
-
+    mode = TANK_MODE;
+    Serial.print("mode:");
+    Serial.println(mode);
   }
 
-  /* Serial.print("Left_motor:");
-  Serial.println(leftWheelAccel);
 
-  Serial.print("Right_motor:");
-  Serial.println(rightWheelAccel); */
+  if (mode == TANK_MODE) {
+    
+    // Acceleration Calculations
+    
+    if (val4 > (500 + DEADZONE_CONST)) {
+      // If the turn direction is to the right
 
-  
+      leftWheelAccel = ((((((float)val4) / 1000))) * 255);
+      rightWheelAccel = ((((1.0 - (((float)val4) / 1000)))) * 255);
 
-  
-  
-  if (val3 > 500 + DEADZONE_CONST) {
-    // Forward Acceleration Control    
+    } else if (val4 < (500 - DEADZONE_CONST)) {
+      // If the turn direction is to the left
 
-    // Left Motor
-    analogWrite(in1, LOW);
-    analogWrite(in2, leftWheelAccel);
+      leftWheelAccel = ((((((float)val4) / 1000))) * 255);
+      rightWheelAccel = ((((1.0 - (((float)val4) / 1000)))) * 255);
 
-    // Right Motor
+    } else {
+      // If there is no turn direction
 
-    analogWrite(in4, LOW);
-    analogWrite(in3, rightWheelAccel);
+      leftWheelAccel = 255;
+      rightWheelAccel = 255;
+    }
 
+    /* Serial.print("Left_motor:");
+    Serial.println(leftWheelAccel);
 
-  } else if (val3 < (500 - DEADZONE_CONST)) {
-    // Backward Acceleration Control
+    Serial.print("Right_motor:");
+    Serial.println(rightWheelAccel); */
 
-    // Left Motor
-    analogWrite(in2, LOW);
-    analogWrite(in1, leftWheelAccel);
+    
 
-    // Right Motor
-    analogWrite(in3, LOW);
-    analogWrite(in4, rightWheelAccel);
+    
+    
+    if (val3 > 500 + DEADZONE_CONST) {
+      // Forward Acceleration Control    
 
-  } else {
-    if (val3 < (500 + DEADZONE_CONST) && val4 > (500 - DEADZONE_CONST)) {
-      // Spin in place right, calculate the proportion of the stick to the right of center
-
-      leftWheelAccel = ((val4 - 500) / 500) * 255;
-      rightWheelAccel = 0;
-
+      // Left Motor
       analogWrite(in1, LOW);
       analogWrite(in2, leftWheelAccel);
 
-    } else if (val3 < (500 + DEADZONE_CONST) && val4 < (500 - DEADZONE_CONST)) {
-      // Spin in place to the left, calculate the proportion of the stick to the left of center
-
-      leftWheelAccel = 0;
-      rightWheelAccel = (((500 - val4) / 500) * 255);
+      // Right Motor
 
       analogWrite(in4, LOW);
-      analogWrite(in2, leftWheelAccel);
+      analogWrite(in3, rightWheelAccel);
+
+
+    } else if (val3 < (500 - DEADZONE_CONST)) {
+      // Backward Acceleration Control
+
+      // Left Motor
+      analogWrite(in2, LOW);
+      analogWrite(in1, leftWheelAccel);
+
+      // Right Motor
+      analogWrite(in3, LOW);
+      analogWrite(in4, rightWheelAccel);
+
+    } else {
+      if (val3 < (500 + DEADZONE_CONST) && val3 > (500 - DEADZONE_CONST) && val4 > (500 + DEADZONE_CONST)) {
+        // Spin in place right, calculate the proportion of the stick to the right of center
+
+        leftWheelAccel = ((val4 - 500) / 500) * 255;
+        rightWheelAccel = 0;
+
+        analogWrite(in1, LOW);
+        analogWrite(in2, leftWheelAccel);
+
+      } else if (val3 < (500 + DEADZONE_CONST) && val3 > (500 - DEADZONE_CONST) && val4 < (500 - DEADZONE_CONST)) {
+        // Spin in place to the left, calculate the proportion of the stick to the left of center
+
+        leftWheelAccel = 0;
+        rightWheelAccel = (((500 - val4) / 500) * 255);
+
+        analogWrite(in4, LOW);
+        analogWrite(in2, leftWheelAccel);
+      }
     }
   }
-} else {
-  // Printout for safety
-
-  safe = 0;
-  Serial.print("safety:");
-  Serial.println(safe);
-}
 
   
 
