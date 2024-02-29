@@ -6,7 +6,7 @@
 #include <avr/interrupt.h>
 
 #define RECEIVER_VAL_CEILING 2000
-#define DEADZONE_CONST 50
+#define DEADZONE_CONST 75
 
 #define LED LED_BUILTIN
 
@@ -33,6 +33,7 @@ int val6;  // Channel 5 Upper Right Knob - CounterCW to Clockwise
 int accel;
 float leftWheelAccel;
 float rightWheelAccel;
+int safe;
 
 void setup() {
   IBus.begin(Serial);    // iBUS object connected to serial0 RX pin
@@ -74,10 +75,29 @@ void loop() {
   val5 = IBus.readChannel(4) - 1000;
   val6 = IBus.readChannel(5) - 1000;
 
+  Serial.print("ch0:");
+  Serial.println(val1);
+  Serial.print("ch1:");
+  Serial.println(val2);
+  Serial.print("ch2:");
+  Serial.println(val3);
+  Serial.print("ch3:");
+  Serial.println(val4);
+  Serial.print("ch4:");
+  Serial.println(val5);
+  Serial.print("ch5:");
+  Serial.println(val6);
+
+if (!((val1 == -1000 && val6 != -1000) && val5 == 1000 && val6 == 1000)) {
+  // Printout for safety
+
+  safe = 1;
+  Serial.print("safety:");
+  Serial.println(safe);
 
 
   // Acceleration Calculations
-    
+  
   if (val4 > 500 + DEADZONE_CONST) {
     // If the turn direction is to the right
 
@@ -92,14 +112,16 @@ void loop() {
 
   }
 
-  Serial.print("Left_motor:");
+  /* Serial.print("Left_motor:");
   Serial.println(leftWheelAccel);
 
   Serial.print("Right_motor:");
-  Serial.println(rightWheelAccel);
+  Serial.println(rightWheelAccel); */
 
   
 
+  
+  
   if (val3 > 500 + DEADZONE_CONST) {
     // Forward Acceleration Control    
 
@@ -113,7 +135,7 @@ void loop() {
     analogWrite(in3, rightWheelAccel);
 
 
-  } else if (val3 < 500 -) {
+  } else if (val3 < (500 - DEADZONE_CONST)) {
     // Backward Acceleration Control
 
     // Left Motor
@@ -125,7 +147,7 @@ void loop() {
     analogWrite(in4, rightWheelAccel);
 
   } else {
-    if (val3 < 510 && val4 > 510) {
+    if (val3 < (500 + DEADZONE_CONST) && val4 > (500 - DEADZONE_CONST)) {
       // Spin in place right, calculate the proportion of the stick to the right of center
 
       leftWheelAccel = ((val4 - 500) / 500) * 255;
@@ -134,7 +156,7 @@ void loop() {
       analogWrite(in1, LOW);
       analogWrite(in2, leftWheelAccel);
 
-    } else if (val3 < 510 && val4 < 490) {
+    } else if (val3 < (500 + DEADZONE_CONST) && val4 < (500 - DEADZONE_CONST)) {
       // Spin in place to the left, calculate the proportion of the stick to the left of center
 
       leftWheelAccel = 0;
@@ -144,11 +166,20 @@ void loop() {
       analogWrite(in2, leftWheelAccel);
     }
   }
+} else {
+  // Printout for safety
+
+  safe = 0;
+  Serial.print("safety:");
+  Serial.println(safe);
+}
+
+  
 
 
 
 
-  delay(60);
+  // delay(60);
 }
 
 
