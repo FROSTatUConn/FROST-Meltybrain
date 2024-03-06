@@ -35,8 +35,8 @@ int val1;  // Channel 0 Right Stick - Left/Right (all values 1000->2000)
 int val2;  // Channel 1 Right Stick - Up/Down
 int val3;  // Channel 2 Left Stick - Up/Down (throttle for planes)
 int val4;  // Channel 3 Left Stick - Left/Right
-int val5 = 0;  // Channel 4 Upper Left Knob - CounterCW to Clockwise
-int val6 = 0;  // Channel 5 Upper Right Knob - CounterCW to Clockwise
+int val5 = 0;  // Unassigned channel
+int val6 = 0;  // SWD Switch
 int accel;
 float leftWheelAccel;
 float rightWheelAccel;
@@ -100,7 +100,7 @@ void loop() {
 
   // !((val1 == -1000 && val6 != -1000) && val5 == 1000 && val6 == 1000)
 
-  if ((val5 == 0 && val6 == 0) || !(val5 == 1000 && val6 == 1000)) {
+  if (!(val6 == 1000)) {
     // Sets mode to idle if any of the conditions are not met
 
     mode = IDLE_MODE;
