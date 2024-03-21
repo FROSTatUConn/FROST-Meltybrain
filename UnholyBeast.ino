@@ -24,8 +24,7 @@
 #define in3 6
 #define in4 5
 
-// Initialize a PPMReader on digital pin 3 with 6 expected channels.
-byte interruptPin = 3;
+// Initialize an IBus object, with 6 expected channels.
 byte channelAmount = 6;
 IBusBM IBus;    // IBus object
 
@@ -100,7 +99,7 @@ void loop() {
 
   // !((val1 == -1000 && val6 != -1000) && val5 == 1000 && val6 == 1000)
 
-  if (!(val6 == 1000)) {
+  if (val6 != 1000) {
     // Sets mode to idle if any of the conditions are not met
 
     mode = IDLE_MODE;
