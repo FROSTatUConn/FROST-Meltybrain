@@ -204,7 +204,9 @@ void loop() {
   }
 
   
-
+  if (mode == SPIN_MODE) {
+    
+  }
 
 
 
