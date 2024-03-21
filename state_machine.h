@@ -1,7 +1,12 @@
 #ifndef _STATE_MACHINE_
 #define _STATE_MACHINE_
 
-typedef enum { KILL, IDLE, TANK, SPIN } state_t;
+typedef enum { 
+  KILL=0, 
+  IDLE, 
+  TANK, 
+  SPIN 
+} state_t;
 
 void kill_state(state_t* state);
 void idle_state(state_t* state);

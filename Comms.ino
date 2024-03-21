@@ -1,18 +1,56 @@
 // Bulk of code from SWallen Hardware
 
-#include <PPMReader.h>
+#include <IBusBM.h>
 
-#DEFINE RECEIVER_VAL_CEILING 1600
+#DEFINE RECEIVER_VAL_CEILING 2000
 
 // Initialize a PPMReader on digital pin 3 with 6 expected channels.
 byte interruptPin = 3;
 byte channelAmount = 6;
-unsigned channels[channelAmount];
-PPMReader ppm(interruptPin, channelAmount);
+IBusBM IBus;    // IBus object
+
+//
+
+int val1;  // Channel 0 Right Stick - Left/Right (all values 1000->2000)
+int val2;  // Channel 1 Right Stick - Up/Down
+int val3;  // Channel 2 Left Stick - Up/Down (throttle for planes)
+int val4;  // Channel 3 Left Stick - Right/Left
+int val5;  // Channel 4 Upper Left Knob - CounterCW to Clockwise
+int val6;  // Channel 5 Upper Right Knob - CounterCW to Clockwise
+
+void setup() {
+  IBus.begin(Serial);    // iBUS object connected to serial0 RX pin
+  Serial.begin(115200);           // set up Serial library at 9600 bps 
+}
+
+void loop() {
+
+  val1 = IBus.readChannel(0) - 1000; // get latest value for servo channel 1
+  val2 = IBus.readChannel(1) - 1000;
+  val3 = IBus.readChannel(2) - 1000;
+  val4 = IBus.readChannel(3) - 1000;
+  val5 = IBus.readChannel(4) - 1000;
+  val6 = IBus.readChannel(5) - 1000;
+
+
+
+  
+
+
+
+
+  delay(60);
+}
+
+
+
+
+
+
 
 // TODO: See where the variables in pollSerial are used and figure out if they are important to implementing PPM
 
-void pollSerial() {
+/* void pollSerial() {
   while(Serial1.available()) {
     if(serialState == SERIAL_WAIT) {
       if(Serial1.read() == 0x7E) {
@@ -29,19 +67,12 @@ void pollSerial() {
       bytesRead = 0;
       serialState = SERIAL_WAIT;
     }
-    
   }
-}
+} */
 
 
-void readPPM() {
-    for (byte channel = 1; channel <= channelAmount; ++channel) {
-        channels[channel] = ppm.latestValidChannelValue(channel, 0);
-    }
-}
 
-
-void receiveSignal() {
+/* void receiveSignal() {
   lastReceived = micros();
 
   // Makes it so that the sensing mode is always set to the accelerometer 
@@ -78,7 +109,7 @@ void receiveSignal() {
    int16_t calcAngle = (int16_t) (atan2((double) thumbY, (double) thumbX*(flip*2-1))*180.0/PI);
    if(calcAngle < 0) calcAngle += 360;
    meltyAngle = (uint16_t) calcAngle;
-  }
+  } */
 
 
 
