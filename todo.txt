@@ -2,3 +2,4 @@ Here are the things to do for the MB project:
 -  Implement safety
 -  Implement control
 -  It would be pretty cool to have a POV display
+-  Finish this damn thing
