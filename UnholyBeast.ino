@@ -100,7 +100,7 @@ void loop() {
   // !((val1 == -1000 && val6 != -1000) && val5 == 1000 && val6 == 1000)
 
   if (val6 != 1000) {
-    // Sets mode to idle if any of the conditions are not met
+    // Sets mode to idle if the safety is on
 
     mode = IDLE_MODE;
 
