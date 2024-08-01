@@ -33,6 +33,7 @@ FROST Robotics is the official combat robotics club of the University of Connect
 - [Trello board](https://trello.com/b/osOCW6Ca/meltybrain-frost-robotics)
 - [Spencer's Hardware Blog](https://www.swallenhardware.io/battlebots/2018/4/28/halo-a-first-adventure-in-combat-robotics-overview)
 - [OpenMelt2 GitHub :star:](https://github.com/nothinglabs/openmelt2)
+
 #### List of current components/devices
 - Microcontroller: Arduino Uno/Nano (for dev) and Teensy 4.0
 - Accelerometer: H3LIS331DL
