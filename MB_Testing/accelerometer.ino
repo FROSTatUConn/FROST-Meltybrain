@@ -1,6 +1,6 @@
 #include "accelerometer.h"
 #include <Wire.h>
-#include <SparkFun_LI331.h>
+#include <SparkFun_LIS331.h>
 
 LIS331 xl;
 int16_t raw_xyz[3];

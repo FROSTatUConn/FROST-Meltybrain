@@ -1,5 +1,5 @@
 #include <Wire.h>
-#include "SparkFun_LI331.h"
+#include "SparkFun_LIS331.h"
 
 #ifndef __accelerometer_h__
 #define __accelerometer_h__ 
