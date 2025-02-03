@@ -11,6 +11,8 @@ LIS331 xl;
 // int16_t curr_y[] = {0, 0, 0, 0, 0};
 // int16_t curr_z[] = {0, 0, 0, 0, 0};
 
+bool setUp = true;
+
 unsigned long t = 0;
 unsigned long t1;
 unsigned long t2;
@@ -72,7 +74,7 @@ void funnyMeanFilter(int16_t x, int16_t y, int16_t z, double &sx, double &sy, do
 }
 */
 
-void setup() 
+void accelSetup() 
 {
   // put your setup code here, to run once:
   pinMode(9,INPUT);       // Interrupt pin input
@@ -108,59 +110,82 @@ void setup()
                           //  which interrupt source we're configuring,
                           //  and whether to enable (true) or disable
                           //  (false) the interrupt.
-  Serial.begin(115200);
+  
+  // set up Serial Library if this is main file
+  // Serial.begin(115200);
 
   //xl.setFullScale(LIS331::HIGH_RANGE);
 }
 
 float loop_timer = 0;
-void loop() 
+float prev_loop_time = 0;
+void accelLoop() 
 {
+  if (loop_timer >= 30000) setUp = false;
   int16_t x, y, z;
   //double smooth_x, smooth_y, smooth_z;
   if (millis() - loop_timer > 50)
   {
+    prev_loop_time = loop_timer;
     loop_timer = millis();
     xl.readAxes(x, y, z);  // The readAxes() function transfers the
                            //  current axis readings into the three
                            //  parameter variables passed to it.
+  
+    // Early Testing Stuffs that will NOT be used
     //smoothX = xl.convertToG(100,x);
-
     //funnyMeanFilter(x, y, z, smooth_x, smooth_y, smooth_z);  // very basic mean filter
+
+    // Use the low pass filter on the raw data
     lowPassFilter(x, y, z);   // low pass filter, places outputs in smooth_
 
-    double newZ = adjust(2, True);
+    // Scale and center the data to be in terms of m/s/s
+    // Also include cutoff values to reduce random data
+    double newZ = adjust(2, setUp);
     newZ = min(max(newZ, -9.81), 9.81);
 
-    double newX = adjust(0, True);
-    //newX *= 2*abs(acos(abs(newZ)/9.81))/PI;
+    double newX = adjust(0, setUp);
+    if (abs(newX) < 2.5) newX = 0;
 
-    double newY = adjust(1, True); // acceleration (m/s/s)
+    double newY = adjust(1, setUp); // acceleration (m/s/s)
+    if (abs(newY) < 2.5) newY = 0;
 
 
 
-    t2 = t1;
+    // Experimental:
+    // Tries to cancel out gravity when it is not facing up
+    // This is to try and remove the slight acceleration picked up from gravity
+    double gPercent = 2*abs(acos(1-(abs(newZ)/9.81)))/PI;
+    newX *= gPercent;
+    newY *= gPercent;
+
+
+    // Two ways of getting the ang_vel (idk if either work yet)
+    double ang_vel = sqrt(abs(newY) / RADIUS); // angular velocity (rad/s)
+    double ang_vel2 = abs(newX) * (millis()-t1);
+
+    // RPM
+    int rpm = (int)(ang_vel / (TWO_PI));
+    double rpm_d = ang_vel / TWO_PI * 60;
+
+
+    // idk what I was on when I wrote this please shame me
+    // int sign = 2*(newY/abs(newY) >= 0)-1;
+    //int8_t sign = newY/abs(newY);
+
+    double w = abs(sqrt(abs(newY)/RADIUS));
+
     t1 = t;
     t = millis();
 
-    double ang_vel = sqrt(abs(newY) / RADIUS); // angular velocity (rad/s)
-    double ang_vel2 = abs(newX) * (millis()-t1);
-    int rpm = (int)(ang_vel / (TWO_PI));
+    currAngle += (newX/abs(newX) * w * (t-t1)) * 180 / PI;
 
-
-
-    int sign = 2*(newY/abs(newY) >= 0)-1;
-
-    //newY *= asin(newZ/9.81)*2/PI;
-
-    double w = sign*sqrt(abs(newY)/RADIUS);
-
-    
-    currAngle = fmod(w*(t-t1)/1000+currAngle, 360);
+    //currAngle = fmod(w*(t-t1)/1000+currAngle, 360);
 
     //double accel = smooth_x*(asin(smooth_z/9.81)*2/acos(-1));
     //velocity += accel*dt_sec;
     //angularVelocity = velocity/RADIUS;
+
 
     Serial.print("x:");
     Serial.print(x);
@@ -173,6 +198,9 @@ void loop()
     Serial.print(",");
     Serial.print("newz:");
     Serial.print(newZ);
+    Serial.print(",");
+    Serial.print("gPercent:");
+    Serial.print(gPercent);
     Serial.print(",");
     Serial.print("ang_vel1:");
     Serial.print(ang_vel);
@@ -195,7 +223,7 @@ void loop()
     //Serial.println(" ");                // maximum g-rating.
 
     Serial.print(",rpm:");
-    Serial.println(rpm);
+    Serial.println(rpm_d);
   }
   else {
     //dt = micros() - loopTimer;
