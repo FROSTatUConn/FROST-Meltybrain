@@ -13,9 +13,19 @@ LIS331 xl;
 
 bool setUp = true;
 
+double gPercent;
+double ang_vel;
+int rpm;
+double rpm_d;
+double w;
+
 unsigned long t = 0;
 unsigned long t1;
 unsigned long t2;
+
+long w1 = 0;
+long w2 = 0;
+
 
 double velocity;
 double angularVelocity;
@@ -132,17 +142,22 @@ void accelLoop()
                            //  current axis readings into the three
                            //  parameter variables passed to it.
   
+
+
     // Early Testing Stuffs that will NOT be used
     //smoothX = xl.convertToG(100,x);
     //funnyMeanFilter(x, y, z, smooth_x, smooth_y, smooth_z);  // very basic mean filter
 
+
     // Use the low pass filter on the raw data
     lowPassFilter(x, y, z);   // low pass filter, places outputs in smooth_
+
 
     // Scale and center the data to be in terms of m/s/s
     // Also include cutoff values to reduce random data
     double newZ = adjust(2, setUp);
     newZ = min(max(newZ, -9.81), 9.81);
+    if (abs(newZ) < 2.5) newZ = 0;
 
     double newX = adjust(0, setUp);
     if (abs(newX) < 2.5) newX = 0;
@@ -151,41 +166,48 @@ void accelLoop()
     if (abs(newY) < 2.5) newY = 0;
 
 
+    // Make it so that the angle is not recorded during set up
+    if (!setUp) {
 
-    // Experimental:
-    // Tries to cancel out gravity when it is not facing up
-    // This is to try and remove the slight acceleration picked up from gravity
-    double gPercent = 2*abs(acos(1-(abs(newZ)/9.81)))/PI;
-    newX *= gPercent;
-    newY *= gPercent;
+    
 
-
-    // Two ways of getting the ang_vel (idk if either work yet)
-    double ang_vel = sqrt(abs(newY) / RADIUS); // angular velocity (rad/s)
-    double ang_vel2 = abs(newX) * (millis()-t1);
-
-    // RPM
-    int rpm = (int)(ang_vel / (TWO_PI));
-    double rpm_d = ang_vel / TWO_PI * 60;
+      // Experimental:
+      // Tries to cancel out gravity when it is not facing up
+      // This is to try and remove the slight acceleration picked up from gravity
+      gPercent = 2*abs(acos(1-(abs(newZ)/9.81)))/PI;
+      newX *= gPercent;
+      newY *= gPercent;
 
 
-    // idk what I was on when I wrote this please shame me
-    // int sign = 2*(newY/abs(newY) >= 0)-1;
-    //int8_t sign = newY/abs(newY);
 
-    double w = abs(sqrt(abs(newY)/RADIUS));
+      // Two ways of getting the ang_vel (idk if either work yet)
+      ang_vel = sqrt(abs(newY) / RADIUS); // angular velocity (rad/s)
+      //double ang_vel2 = abs(newX) * (millis()-t1);
 
-    t1 = t;
-    t = millis();
+      // RPM
+      rpm = (int)(ang_vel / (TWO_PI));
+      rpm_d = ang_vel / TWO_PI * 60;
 
-    currAngle += (newX/abs(newX) * w * (t-t1)) * 180 / PI;
 
-    //currAngle = fmod(w*(t-t1)/1000+currAngle, 360);
+      // idk what I was on when I wrote this please shame me
+      // int sign = 2*(newY/abs(newY) >= 0)-1;
+      //int8_t sign = newY/abs(newY);
 
-    //double accel = smooth_x*(asin(smooth_z/9.81)*2/acos(-1));
-    //velocity += accel*dt_sec;
-    //angularVelocity = velocity/RADIUS;
+      w = abs(sqrt(abs(newY)/RADIUS));
 
+      t1 = t;
+      t = millis();
+
+      currAngle += (w * (t-t1)) * 180 / PI;
+
+      //currAngle = fmod(w*(t-t1)/1000+currAngle, 360);
+
+      //double accel = smooth_x*(asin(smooth_z/9.81)*2/acos(-1));
+      //velocity += accel*dt_sec;
+      //angularVelocity = velocity/RADIUS;
+
+
+    }
 
     Serial.print("x:");
     Serial.print(x);
@@ -205,9 +227,9 @@ void accelLoop()
     Serial.print("ang_vel1:");
     Serial.print(ang_vel);
     Serial.print(",");
-    Serial.print("ang_vel2:");
-    Serial.print(ang_vel2);
-    Serial.print(",");
+    //Serial.print("ang_vel2:");
+    //Serial.print(ang_vel2);
+    //Serial.print(",");
     // Serial.print("w:");
     //Serial.print(w);
     // Serial.print(",");

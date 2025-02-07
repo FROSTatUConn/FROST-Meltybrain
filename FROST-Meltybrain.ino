@@ -38,6 +38,9 @@ void setup() {
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, LOW);
+
+
+  accelSetup();
 }
 
 void loop() {
@@ -53,6 +56,8 @@ void loop() {
   if (mode == TANK_MODE) {
     tankMode();
   }
+
+  accelLoop();
 }
 
 
