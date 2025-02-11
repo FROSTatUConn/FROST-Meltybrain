@@ -1,6 +1,12 @@
 #include "SparkFun_LIS331.h"
 #include <Wire.h>
 
+
+#include <EEPROM.h>
+
+int address = 0;
+
+
 double RADIUS = 0.021;
 
 void funnyMeanFilter(int16_t x, int16_t y, int16_t z, double &sx, double &sy, double &sz);
@@ -24,7 +30,9 @@ unsigned long t1;
 unsigned long t2;
 
 long w1 = 0;
-long w2 = 0;
+//long w2 = 0;
+
+long theta = 0;
 
 
 double velocity;
@@ -136,7 +144,7 @@ void accelLoop()
   //double smooth_x, smooth_y, smooth_z;
   if (millis() - loop_timer > 50)
   {
-    prev_loop_time = loop_timer;
+    //prev_loop_time = loop_timer;
     loop_timer = millis();
     xl.readAxes(x, y, z);  // The readAxes() function transfers the
                            //  current axis readings into the three
@@ -157,13 +165,13 @@ void accelLoop()
     // Also include cutoff values to reduce random data
     double newZ = adjust(2, setUp);
     newZ = min(max(newZ, -9.81), 9.81);
-    if (abs(newZ) < 2.5) newZ = 0;
+    if (abs(newZ) < 2.75) newZ = 0;
 
     double newX = adjust(0, setUp);
-    if (abs(newX) < 2.5) newX = 0;
+    if (abs(newX) < 2.75) newX = 0;
 
     double newY = adjust(1, setUp); // acceleration (m/s/s)
-    if (abs(newY) < 2.5) newY = 0;
+    if (abs(newY) < 2.75) newY = 0;
 
 
     // Make it so that the angle is not recorded during set up
@@ -185,28 +193,52 @@ void accelLoop()
       //double ang_vel2 = abs(newX) * (millis()-t1);
 
       // RPM
-      rpm = (int)(ang_vel / (TWO_PI));
-      rpm_d = ang_vel / TWO_PI * 60;
+      rpm = (int)(ang_vel / (TWO_PI)); // lol this actually rps
+      rpm_d = ang_vel / TWO_PI * 60; // rpm but double
 
 
       // idk what I was on when I wrote this please shame me
+      // its just trying to see if it is pos or neg lmao
       // int sign = 2*(newY/abs(newY) >= 0)-1;
-      //int8_t sign = newY/abs(newY);
+      // int8_t sign = newY/abs(newY);
 
-      w = abs(sqrt(abs(newY)/RADIUS));
+      // Properly gives the ang_vel a direction
+      w = abs(ang_vel) * copysign(1.0, smooth[0]);
 
+
+
+
+
+      // A Better Time
+      t2 = t1;
+      // Previous Time
       t1 = t;
+      // Current Time
       t = millis();
 
-      currAngle += (w * (t-t1)) * 180 / PI;
 
+      // Very simple way to get angle
+      // Gets the current angle by multiplying the angular velocity by the time elapsed
+      currAngle += (w * (t-t1)/1000) * 180 / PI;
       //currAngle = fmod(w*(t-t1)/1000+currAngle, 360);
 
-      //double accel = smooth_x*(asin(smooth_z/9.81)*2/acos(-1));
-      //velocity += accel*dt_sec;
-      //angularVelocity = velocity/RADIUS;
+
+      // Prediction angle algorithm used in Spencer's Hardware Blog
+      // Predict what the current w is
+      double w_predicted = w1 + (t-t1)/(t2-t1) * (w-w1);
+      // Save the w as the "previous w"
+      w1 = w;
+      // Predict the current angle
+      double theta_predicted = (w_predicted + w)/2 * (t-t2) + theta;
+      // Save the angle
+      theta = theta_predicted;
 
 
+      EEPROM.write(address+1, int8_t(w));
+      address++;
+      if (address == EEPROM.length()) {
+        address = 0;
+      }
     }
 
     Serial.print("x:");
@@ -221,9 +253,9 @@ void accelLoop()
     Serial.print("newz:");
     Serial.print(newZ);
     Serial.print(",");
-    Serial.print("gPercent:");
-    Serial.print(gPercent);
-    Serial.print(",");
+    //Serial.print("gPercent:");
+    //Serial.print(gPercent);
+    //Serial.print(",");
     Serial.print("ang_vel1:");
     Serial.print(ang_vel);
     Serial.print(",");
