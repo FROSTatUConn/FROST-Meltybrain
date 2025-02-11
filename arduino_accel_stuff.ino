@@ -9,7 +9,9 @@ int address = 0;
 
 double RADIUS = 0.021;
 
-void funnyMeanFilter(int16_t x, int16_t y, int16_t z, double &sx, double &sy, double &sz);
+
+// For old filter that will never be used again
+// void funnyMeanFilter(int16_t x, int16_t y, int16_t z, double &sx, double &sy, double &sz);
 
 LIS331 xl;
 
@@ -219,7 +221,7 @@ void accelLoop()
 
       // Very simple way to get angle
       // Gets the current angle by multiplying the angular velocity by the time elapsed
-      currAngle += (w * (t-t1)/1000) * 180 / PI;
+      currAngle += (w * (t-t1)/1000) * (180 / PI);
       //currAngle = fmod(w*(t-t1)/1000+currAngle, 360);
 
 
@@ -234,10 +236,13 @@ void accelLoop()
       theta = theta_predicted;
 
 
-      EEPROM.write(address+1, int8_t(w));
-      address++;
-      if (address == EEPROM.length()) {
-        address = 0;
+      if (loop_timer+address*1875/32 >= 60000 && address < EEPROM.length()) {
+        EEPROM.put(address, float(w));
+        address++;
+        // address++;
+        // if (address == EEPROM.length()) {
+        //   address = 0;
+        // }
       }
     }
 
