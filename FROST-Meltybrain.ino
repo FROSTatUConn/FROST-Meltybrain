@@ -1,4 +1,5 @@
 #include <IBusBM.h>
+#include <EEPROM.h>
 
 // Motor A connections
 #define in1 11
