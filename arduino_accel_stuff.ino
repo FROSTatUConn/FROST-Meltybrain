@@ -236,8 +236,8 @@ void accelLoop()
       theta = theta_predicted;
 
 
-      if (loop_timer+address*1875/32 >= 60000 && address < EEPROM.length()) {
-        EEPROM.put(address, float(w));
+      if (loop_timer+address*1875/32 >= 60000 && address < EEPROM.length()/4) {
+        EEPROM.put(address*4, float(w));
         address++;
         // address++;
         // if (address == EEPROM.length()) {
