@@ -21,8 +21,3 @@ void writeMemory() {
   }
 }
 
-void readMemory() {
-  for (int i = 0; i < 512; i++) {
-
-  }
-}
