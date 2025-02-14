@@ -5,6 +5,7 @@ int eeAddress = 0;
 
 int time = 0;
 
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
@@ -31,8 +32,10 @@ void setup() {
   for (int i=0; i<EEPROM.length(); i=i+4) {
     float data;
     EEPROM.get(i, data);
-    Serial.print(i);
-    Serial.print(" - ");
+    Serial.print("Time:");
+    Serial.print(float(i)*1875/32000);
+    //Serial.print(" - ");
+    Serial.print(",W:");
     Serial.println(data);
     
   }

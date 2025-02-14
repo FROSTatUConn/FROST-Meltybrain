@@ -20,6 +20,8 @@ LIS331 xl;
 // int16_t curr_z[] = {0, 0, 0, 0, 0};
 
 bool setUp = true;
+short cutOff = 2.75;
+double temp = 0;
 
 double gPercent;
 double ang_vel;
@@ -135,6 +137,9 @@ void accelSetup()
   // Serial.begin(115200);
 
   //xl.setFullScale(LIS331::HIGH_RANGE);
+
+
+  pinMode(12, OUTPUT);
 }
 
 float loop_timer = 0;
@@ -167,13 +172,15 @@ void accelLoop()
     // Also include cutoff values to reduce random data
     double newZ = adjust(2, setUp);
     newZ = min(max(newZ, -9.81), 9.81);
-    if (abs(newZ) < 2.75) newZ = 0;
+    if (abs(newZ) < cutOff) newZ = 0;
 
     double newX = adjust(0, setUp);
-    if (abs(newX) < 2.75) newX = 0;
+    int sign = copysign(1.0, newX);
+    if (abs(newX) < cutOff) newX = 0;
 
     double newY = adjust(1, setUp); // acceleration (m/s/s)
-    if (abs(newY) < 2.75) newY = 0;
+    if (abs(newY) < cutOff) newY = 0;
+
 
 
     // Make it so that the angle is not recorded during set up
@@ -187,6 +194,8 @@ void accelLoop()
       gPercent = 2*abs(acos(1-(abs(newZ)/9.81)))/PI;
       newX *= gPercent;
       newY *= gPercent;
+
+      temp = newY;
 
 
 
@@ -205,7 +214,9 @@ void accelLoop()
       // int8_t sign = newY/abs(newY);
 
       // Properly gives the ang_vel a direction
-      w = abs(ang_vel) * copysign(1.0, smooth[0]);
+      // sign is kind of stupid right now and takes a sec to realize when the direction changes
+      //w = abs(ang_vel) * sign;
+      w = abs(ang_vel);
 
 
 
@@ -236,14 +247,7 @@ void accelLoop()
       theta = theta_predicted;
 
 
-      if (loop_timer+address*1875/32 >= 60000 && address < EEPROM.length()/4) {
-        EEPROM.put(address*4, float(w));
-        address++;
-        // address++;
-        // if (address == EEPROM.length()) {
-        //   address = 0;
-        // }
-      }
+      
     }
 
     Serial.print("x:");
@@ -291,6 +295,28 @@ void accelLoop()
   if (digitalRead(9) == HIGH)
   {
     Serial.println("Interrupt");
+  }
+
+
+
+  // Two conditions to record data
+  // 1. Loop_timer is greater than 1 min and the increment of the address (256 puts per minute afterwards)
+  // 2. Until all the spots are full
+  // 1875/8 = 60000/EEPROM.length()*4
+  if (loop_timer >= 40000+address*1875/32 && address < EEPROM.length()) {
+    // Puts the angular velocity into the EEPROM
+    //EEPROM.put(address, float(w));
+    EEPROM.put(address, float(temp));
+    // Increments the EEPROM
+    address += 4;
+  }
+  // Controls LED and CutOff
+  if (loop_timer >= 39000 && loop_timer < 100000) {
+    cutOff = 0.5;
+    digitalWrite(12, HIGH);
+  } else {
+    cutOff = 2.75;
+    digitalWrite(12, LOW);
   }
 }
 
