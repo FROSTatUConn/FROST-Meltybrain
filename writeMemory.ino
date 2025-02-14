@@ -3,7 +3,7 @@ int prev = 0;
 short initial;
 
 void writeMemory() {
-  delay(5000);
+  delay(60000);
   initial = EEPROM.read(0);
   short coords[3];
   for (int j = 0; j < 3; j++) {
