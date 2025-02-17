@@ -42,6 +42,7 @@ void setup() {
 
 
   accelSetup();
+  writeMemory();
 }
 
 void loop() {
