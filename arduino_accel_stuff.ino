@@ -7,7 +7,9 @@
 int address = 0;
 
 
-double RADIUS = 0.021;
+//double RADIUS = 0.021;
+//double RADIUS = 0.0188;
+double RADIUS = 0.0663;
 
 
 // For old filter that will never be used again
@@ -42,14 +44,14 @@ long theta = 0;
 double velocity;
 double angularVelocity;
 double currAngle = 0;
-  
-double max[3] = {0, 0, 0};
-double min[3] = {0, 0, 0};
 
-double smooth[3] = {0, 0, 0};
+double max[3] = { 0, 0, 0 };
+double min[3] = { 0, 0, 0 };
+
+double smooth[3] = { 0, 0, 0 };
 
 // Simple Low Pass Filter to smooth out data
-float LPF_Beta = 0.2; //0.025;
+float LPF_Beta = 0.2;  //0.025;
 void lowPassFilter(int16_t x, int16_t y, int16_t z) {
   smooth[0] = smooth[0] - (LPF_Beta * (smooth[0] - x));
   smooth[1] = smooth[1] - (LPF_Beta * (smooth[1] - y));
@@ -59,12 +61,12 @@ void lowPassFilter(int16_t x, int16_t y, int16_t z) {
 double adjust(int8_t index, bool setUp) {
   // This if statement is used to scale the values due to gravity by finding gravity
   if (setUp) {
-    max[index] = max(max[index], smooth[index]*0.9);      // gets the current max value that index has felt
-    min[index] = min(min[index], smooth[index]*0.9);      // gets the current max value that index has felt
+    max[index] = max(max[index], smooth[index] * 0.9);  // gets the current max value that index has felt
+    min[index] = min(min[index], smooth[index] * 0.9);  // gets the current max value that index has felt
   }
-  
-  // this line returns an adjusted version of the value to be centered and to 
-  return 10.3005*(2*smooth[index]-max[index]-min[index]) / (max[index]-min[index]);   // 1.05 * g * (2*curr - mid point) / max value
+
+  // this line returns an adjusted version of the value to be centered and to
+  return 10.3005 * (2 * smooth[index] - max[index] - min[index]) / (max[index] - min[index]);  // 1.05 * g * (2*curr - mid point) / max value
   // (2*curr - mid point) / max value     This gets the data in -1<=x<=1 format
   // g is gravity (9.81 m/s/s)
   // 1.05 is included to make sure that it is going to 9.81 when facing upward
@@ -96,43 +98,42 @@ void funnyMeanFilter(int16_t x, int16_t y, int16_t z, double &sx, double &sy, do
 }
 */
 
-void accelSetup() 
-{
+void accelSetup() {
   // put your setup code here, to run once:
-  pinMode(9,INPUT);       // Interrupt pin input
+  pinMode(9, INPUT);  // Interrupt pin input
   Wire.begin();
-  xl.setI2CAddr(0x19);    // This MUST be called BEFORE .begin() so 
-                          //  .begin() can communicate with the chip
-  xl.begin(LIS331::USE_I2C); // Selects the bus to be used and sets
-                          //  the power up bit on the accelerometer.
-                          //  Also zeroes out all accelerometer
-                          //  registers that are user writable.
+  xl.setI2CAddr(0x19);        // This MUST be called BEFORE .begin() so
+                              //  .begin() can communicate with the chip
+  xl.begin(LIS331::USE_I2C);  // Selects the bus to be used and sets
+                              //  the power up bit on the accelerometer.
+                              //  Also zeroes out all accelerometer
+                              //  registers that are user writable.
 
 
   // This next section configures an interrupt. It will cause pin
   //  INT1 on the accelerometer to go high when the absolute value
   //  of the reading on the Z-axis exceeds a certain level for a
   //  certain number of samples.
-  xl.intSrcConfig(LIS331::INT_SRC, 1); // Select the source of the
-                          //  signal which appears on pin INT1. In
-                          //  this case, we want the corresponding
-                          //  interrupt's status to appear. 
-  xl.setIntDuration(50, 1); // Number of samples a value must meet
-                          //  the interrupt condition before an
-                          //  interrupt signal is issued. At the
-                          //  default rate of 50Hz, this is one sec.
-  xl.setIntThreshold(2, 1); // Threshold for an interrupt. This is
-                          //  not actual counts, but rather, actual
-                          //  counts divided by 16.
+  xl.intSrcConfig(LIS331::INT_SRC, 1);  // Select the source of the
+                                        //  signal which appears on pin INT1. In
+                                        //  this case, we want the corresponding
+                                        //  interrupt's status to appear.
+  xl.setIntDuration(50, 1);             // Number of samples a value must meet
+                                        //  the interrupt condition before an
+                                        //  interrupt signal is issued. At the
+                                        //  default rate of 50Hz, this is one sec.
+  xl.setIntThreshold(2, 1);             // Threshold for an interrupt. This is
+                                        //  not actual counts, but rather, actual
+                                        //  counts divided by 16.
   xl.enableInterrupt(LIS331::Z_AXIS, LIS331::TRIG_ON_HIGH, 1, true);
-                          // Enable the interrupt. Parameters indicate
-                          //  which axis to sample, when to trigger
-                          //  (in this case, when the absolute mag
-                          //  of the signal exceeds the threshold),
-                          //  which interrupt source we're configuring,
-                          //  and whether to enable (true) or disable
-                          //  (false) the interrupt.
-  
+  // Enable the interrupt. Parameters indicate
+  //  which axis to sample, when to trigger
+  //  (in this case, when the absolute mag
+  //  of the signal exceeds the threshold),
+  //  which interrupt source we're configuring,
+  //  and whether to enable (true) or disable
+  //  (false) the interrupt.
+
   // set up Serial Library if this is main file
   // Serial.begin(115200);
 
@@ -144,19 +145,17 @@ void accelSetup()
 
 float loop_timer = 0;
 float prev_loop_time = 0;
-void accelLoop() 
-{
+void accelLoop() {
   if (loop_timer >= 30000) setUp = false;
   int16_t x, y, z;
   //double smooth_x, smooth_y, smooth_z;
-  if (millis() - loop_timer > 50)
-  {
+  if (millis() - loop_timer > 1) {
     //prev_loop_time = loop_timer;
     loop_timer = millis();
     xl.readAxes(x, y, z);  // The readAxes() function transfers the
                            //  current axis readings into the three
                            //  parameter variables passed to it.
-  
+
 
 
     // Early Testing Stuffs that will NOT be used
@@ -165,7 +164,7 @@ void accelLoop()
 
 
     // Use the low pass filter on the raw data
-    lowPassFilter(x, y, z);   // low pass filter, places outputs in smooth_
+    lowPassFilter(x, y, z);  // low pass filter, places outputs in smooth_
 
 
     // Scale and center the data to be in terms of m/s/s
@@ -178,7 +177,7 @@ void accelLoop()
     int sign = copysign(1.0, newX);
     if (abs(newX) < cutOff) newX = 0;
 
-    double newY = adjust(1, setUp); // acceleration (m/s/s)
+    double newY = adjust(1, setUp);  // acceleration (m/s/s)
     if (abs(newY) < cutOff) newY = 0;
 
 
@@ -186,26 +185,26 @@ void accelLoop()
     // Make it so that the angle is not recorded during set up
     if (!setUp) {
 
-    
+
 
       // Experimental:
       // Tries to cancel out gravity when it is not facing up
       // This is to try and remove the slight acceleration picked up from gravity
-      gPercent = 2*abs(acos(1-(abs(newZ)/9.81)))/PI;
+      gPercent = 2 * abs(acos(1 - (abs(newZ) / 9.81))) / PI;
       newX *= gPercent;
       newY *= gPercent;
 
-      temp = newY;
+      //temp = newY;
 
 
 
       // Two ways of getting the ang_vel (idk if either work yet)
-      ang_vel = sqrt(abs(newY) / RADIUS); // angular velocity (rad/s)
+      ang_vel = sqrt(abs(newY) / RADIUS);  // angular velocity (rad/s)
       //double ang_vel2 = abs(newX) * (millis()-t1);
 
       // RPM
-      rpm = (int)(ang_vel / (TWO_PI)); // lol this actually rps
-      rpm_d = ang_vel / TWO_PI * 60; // rpm but double
+      rpm = (int)(ang_vel / (TWO_PI));  // lol this actually rps
+      rpm_d = ang_vel / TWO_PI * 60;    // rpm but double
 
 
       // idk what I was on when I wrote this please shame me
@@ -213,6 +212,8 @@ void accelLoop()
       // int sign = 2*(newY/abs(newY) >= 0)-1;
       // int8_t sign = newY/abs(newY);
 
+
+      // w is redundant, ang_vel is always pos
       // Properly gives the ang_vel a direction
       // sign is kind of stupid right now and takes a sec to realize when the direction changes
       //w = abs(ang_vel) * sign;
@@ -232,22 +233,21 @@ void accelLoop()
 
       // Very simple way to get angle
       // Gets the current angle by multiplying the angular velocity by the time elapsed
-      currAngle += (w * (t-t1)/1000) * (180 / PI);
+      currAngle += (w * (t - t1) / 1000) * (180 / PI);
       //currAngle = fmod(w*(t-t1)/1000+currAngle, 360);
+      if (fmod(currAngle,360) < 15) digitalWrite(12, HIGH);
+      else digitalWrite(12, LOW);
 
 
       // Prediction angle algorithm used in Spencer's Hardware Blog
       // Predict what the current w is
-      double w_predicted = w1 + (t-t1)/(t2-t1) * (w-w1);
+      double w_predicted = w1 + (t - t1) / (t2 - t1) * (w - w1);
       // Save the w as the "previous w"
       w1 = w;
       // Predict the current angle
-      double theta_predicted = (w_predicted + w)/2 * (t-t2) + theta;
+      double theta_predicted = (w_predicted + w) / 2 * (t - t2) + theta;
       // Save the angle
       theta = theta_predicted;
-
-
-      
     }
 
     Serial.print("x:");
@@ -287,13 +287,11 @@ void accelLoop()
 
     Serial.print(",rpm:");
     Serial.println(rpm_d);
-  }
-  else {
+  } else {
     //dt = micros() - loopTimer;
   }
 
-  if (digitalRead(9) == HIGH)
-  {
+  if (digitalRead(9) == HIGH) {
     Serial.println("Interrupt");
   }
 
@@ -303,20 +301,19 @@ void accelLoop()
   // 1. Loop_timer is greater than 1 min and the increment of the address (256 puts per minute afterwards)
   // 2. Until all the spots are full
   // 1875/8 = 60000/EEPROM.length()*4
-  if (loop_timer >= 40000+address*1875/32 && address < EEPROM.length()) {
+  if (loop_timer >= 40000 + address * 1875 / 32 && address < EEPROM.length()) {
     // Puts the angular velocity into the EEPROM
-    //EEPROM.put(address, float(w));
-    EEPROM.put(address, float(temp));
+    EEPROM.put(address, float(w));
+    //EEPROM.put(address, float(temp));
     // Increments the EEPROM
     address += 4;
   }
   // Controls LED and CutOff
   if (loop_timer >= 39000 && loop_timer < 100000) {
     cutOff = 0.5;
-    digitalWrite(12, HIGH);
+    //digitalWrite(12, HIGH);
   } else {
     cutOff = 2.75;
-    digitalWrite(12, LOW);
+    //digitalWrite(12, LOW);
   }
 }
-

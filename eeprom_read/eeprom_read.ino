@@ -10,28 +10,10 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
 
-  //EEPROM.write(eeAddress, 17);
-  float a = 1001.001;
-
-  // Tests
-  // EEPROM.put(0, a);
-  // EEPROM.put(4, a);
-  // EEPROM.put(8, a);
-  // EEPROM.put(12, a);
-
-  // EEPROM.get(0, a);
-  // Serial.println(a);
-  // EEPROM.get(4, a);
-  // Serial.println(a);
-  // EEPROM.get(8, a);
-  // Serial.println(a);
-  // EEPROM.get(12, a);
-  // Serial.println(a);
-
-
   for (int i=0; i<EEPROM.length(); i=i+4) {
     float data;
     EEPROM.get(i, data);
+    //data = sqrt(data*data / RADIUS / RADIUS2);
     Serial.print("Time:");
     Serial.print(float(i)*1875/32000);
     //Serial.print(" - ");
