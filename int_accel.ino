@@ -48,7 +48,7 @@ void lowPassFilter(int16_t &x, int16_t &y, int16_t &z) {
   smooth[2] = 4 * smooth[2] / 5 + z * 200;
 }
 
-long adjust(int8_t &index, bool &setUp) {
+long adjust(int8_t index, bool setUp) {
   // Converts to mm/s/s
 
   // This if statement is used to scale the values due to gravity by finding gravity
@@ -65,7 +65,7 @@ long adjust(int8_t &index, bool &setUp) {
   // 1.05 is included to make sure that it is going to 9.81 when facing upward
 }
 
-unsigned long isqrt(unsigned long &num) {
+unsigned long isqrt(unsigned long num) {
   unsigned long res = 0;
   unsigned long bit = 1UL << 30;
 
@@ -175,6 +175,7 @@ void accelLoop() {
 
     //test
     //newY = 8000; // 8 m/s/s
+    //newY = 500000; // 500 m/s/s
 
 
 
@@ -196,9 +197,9 @@ void accelLoop() {
       // ang_vel = sqrt(abs(newY) / RADIUS/100)*10;  // angular velocity (rad/s)
       //unsigned long inverse_w = 2 * 1000000 * 100 / (unsigned long)(sqrt(newY*10*10000 / RADIUS));  // inverse w (microsec / rad)
       
-      //unsigned long inverse_w = (newY == 0) ? 0 : 200000000 / (unsigned long)(sqrt((unsigned long)abs(newY)*100000 / RADIUS));
-      unsigned long inverse_w = (newY) ? 200000000 / (unsigned long)sqrt((unsigned long)abs(newY)*100000 / RADIUS) : 0;
-      //unsigned long inverse_w = (newY) ? 200000000 / isqrt((unsigned long)abs(newY)*100000 / RADIUS) : 0;
+      //unsigned long inverse_w = (newY == 0) ? 0 : 200000 / (unsigned long)(sqrt((unsigned long)abs(newY)*1000 / RADIUS));
+      //unsigned long inverse_w = (newY) ? 200000 / (unsigned long)sqrt((unsigned long)abs(newY)*1000 / RADIUS) : 0;
+      unsigned long inverse_w = (newY) ? 200000 / isqrt((unsigned long)abs(newY)*1000 / RADIUS) : 0;
 
       // unsigned long temp = micros();
       // dt = (temp - t); // times 1000000 to convert rad to micro rad
@@ -220,7 +221,7 @@ void accelLoop() {
       // rad/s * (micros / 1000000)
       // 1000 * microsec / (microsec / microrad)
       // 1000 * microrad = nanorad
-      unsigned long scaled_dt = dt*10000000; // dt*1000000*10;  why 10? idk
+      unsigned long scaled_dt = dt*100000; // dt*10000*10;  why 10? idk
       // unsigned long predict_f = (newY == 0) ? 0 : scaled_dt / inverse_w;
       // unsigned long predict_i = (prev_newY == 0) ? 0 : scaled_dt / prev_inv_w;
       // currAngle += 1000*(predict_f + predict_i);
@@ -258,8 +259,9 @@ void accelLoop() {
 
   if (loop_timer >= 40000000 + address * 1875 / 32 && address < EEPROM.length() && loop_timer <= 100000000) {
     // Puts the angular velocity into the EEPROM
-    EEPROM.put(address, int(prev_newY));
+    //EEPROM.put(address, int(prev_newY));
     //EEPROM.put(address, float(temp));
+    EEPROM.put(address, int(prev_inv_w));
     // Increments the EEPROM
     address += 4;
   }
