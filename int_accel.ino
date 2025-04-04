@@ -41,7 +41,7 @@ long min[3] = { 0, 0, 0 };
 
 // Simple Low Pass Filter to smooth out data
 //float LPF_Beta = 0.2;
-void lowPassFilter(int16_t &x, int16_t &y, int16_t &z) {
+void lowPassFilter(int16_t x, int16_t y, int16_t z) {
   // Also converts m/s/s to mm/s/s
   smooth[0] = 4 * smooth[0] / 5 + x * 200;
   smooth[1] = 4 * smooth[1] / 5 + y * 200;
@@ -58,7 +58,7 @@ long adjust(int8_t index, bool setUp) {
   }
 
   // this line returns an adjusted version of the value to be centered and to
-  return 20601 * (2*smooth[index] - max[index] - min[index]) /2 / (max[index] - min[index]);  // 1.05 * g * (2*curr - mid point) / max value
+  return 20601 * (2*smooth[index] - max[index] - min[index]) / (2*(max[index] - min[index]));  // 1.05 * g * (2*curr - mid point) / max value
   //return ((2 * smooth[index] - max[index] - min[index]) * 20601L) / (2 * (max[index] - min[index]));
   // (2*curr - mid point) / max value     This gets the data in -1<=x<=1 format
   // g is gravity (9.81 m/s/s or 98100 mm/s/s)
@@ -195,7 +195,7 @@ void accelLoop() {
 
 
       // ang_vel = sqrt(abs(newY) / RADIUS/100)*10;  // angular velocity (rad/s)
-      //unsigned long inverse_w = 2 * 1000000 * 100 / (unsigned long)(sqrt(newY*10*10000 / RADIUS));  // inverse w (microsec / rad)
+      //unsigned long inverse_w = 2 * 10000 * 10 / (unsigned long)(sqrt(newY*10*100 / RADIUS));  // inverse w (microsec / rad)
       
       //unsigned long inverse_w = (newY == 0) ? 0 : 200000 / (unsigned long)(sqrt((unsigned long)abs(newY)*1000 / RADIUS));
       //unsigned long inverse_w = (newY) ? 200000 / (unsigned long)sqrt((unsigned long)abs(newY)*1000 / RADIUS) : 0;
@@ -207,7 +207,7 @@ void accelLoop() {
       dt = micros() - t;
       t += dt;
 
-
+      // testing drift
       // y(13000) = 85
       // y(15000) = 100
 
@@ -221,7 +221,9 @@ void accelLoop() {
       // rad/s * (micros / 1000000)
       // 1000 * microsec / (microsec / microrad)
       // 1000 * microrad = nanorad
-      unsigned long scaled_dt = dt*100000; // dt*10000*10;  why 10? idk
+      unsigned long scaled_dt = dt*10000; // dt*10000*10;  why 10? idk // no more 10 :( it because of overflow
+
+
       // unsigned long predict_f = (newY == 0) ? 0 : scaled_dt / inverse_w;
       // unsigned long predict_i = (prev_newY == 0) ? 0 : scaled_dt / prev_inv_w;
       // currAngle += 1000*(predict_f + predict_i);
@@ -233,8 +235,8 @@ void accelLoop() {
       prev_newY = newY;
       prev_inv_w = inverse_w;
 
-
-      if (currAngle < 261799) digitalWrite(12, HIGH); // 261799 original value (15 degrees)
+      // testing *3 to make it 1/8 of the circle
+      if (currAngle < 261799*3) digitalWrite(12, HIGH); // 261799 original value (15 degrees)
       else digitalWrite(12, LOW);
     } else {
       t = micros();
@@ -257,12 +259,12 @@ void accelLoop() {
   }
 
 
-  if (loop_timer >= 40000000 + address * 1875 / 32 && address < EEPROM.length() && loop_timer <= 100000000) {
-    // Puts the angular velocity into the EEPROM
-    //EEPROM.put(address, int(prev_newY));
-    //EEPROM.put(address, float(temp));
-    EEPROM.put(address, int(prev_inv_w));
-    // Increments the EEPROM
-    address += 4;
-  }
+  // if (loop_timer >= 40000000 + address * 1875 / 32 && address < EEPROM.length() && loop_timer <= 100000000) {
+  //   // Puts the angular velocity into the EEPROM
+  //   //EEPROM.put(address, int(prev_newY));
+  //   //EEPROM.put(address, float(temp));
+  //   EEPROM.put(address, int(prev_inv_w));
+  //   // Increments the EEPROM
+  //   address += 4;
+  // }
 }
