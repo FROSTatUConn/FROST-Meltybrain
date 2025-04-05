@@ -11,7 +11,7 @@ void setup() {
   Serial.begin(115200);
 
   for (int i=0; i<EEPROM.length(); i=i+4) {
-    float data;
+    int data;
     EEPROM.get(i, data);
     //data = sqrt(data*data / RADIUS / RADIUS2);
     Serial.print("Time:");

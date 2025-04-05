@@ -23,7 +23,6 @@ LIS331 xl;
 
 bool setUp = true;
 short cutOff = 2.75;
-double temp = 0;
 
 double gPercent;
 double ang_vel;
@@ -40,9 +39,6 @@ long w1 = 0;
 
 long theta = 0;
 
-
-double velocity;
-double angularVelocity;
 double currAngle = 0;
 
 double max[3] = { 0, 0, 0 };
@@ -169,6 +165,10 @@ void accelLoop() {
 
     // Scale and center the data to be in terms of m/s/s
     // Also include cutoff values to reduce random data
+
+    // Lower the cutOff if the angular velocity is greater than half a rotation per second
+    cutOff = w >= PI ? 2.75 : 0.5;
+
     double newZ = adjust(2, setUp);
     newZ = min(max(newZ, -9.81), 9.81);
     if (abs(newZ) < cutOff) newZ = 0;
@@ -194,11 +194,10 @@ void accelLoop() {
       newX *= gPercent;
       newY *= gPercent;
 
-      //temp = newY;
-
 
 
       // Two ways of getting the ang_vel (idk if either work yet)
+      // Fun Fact: Did you know that there are 360 radians in a circle?
       ang_vel = sqrt(abs(newY) / RADIUS);  // angular velocity (rad/s)
       //double ang_vel2 = abs(newX) * (millis()-t1);
 
@@ -309,11 +308,11 @@ void accelLoop() {
     address += 4;
   }
   // Controls LED and CutOff
-  if (loop_timer >= 39000 && loop_timer < 100000) {
-    cutOff = 0.5;
-    //digitalWrite(12, HIGH);
-  } else {
-    cutOff = 2.75;
-    //digitalWrite(12, LOW);
-  }
+  // if (loop_timer >= 39000 && loop_timer < 100000) {
+  //   cutOff = 0.5;
+  //   //digitalWrite(12, HIGH);
+  // } else {
+  //   cutOff = 2.75;
+  //   //digitalWrite(12, LOW);
+  // }
 }
