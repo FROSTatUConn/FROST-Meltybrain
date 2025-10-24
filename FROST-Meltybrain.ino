@@ -29,11 +29,11 @@ void setup() {
   IBus.begin(Serial);
   Serial.begin(115200);           // set up Serial library at 115200 bps
 
-  wdt_disable();
+  //wdt_disable();
 
   delay(5000);
 
-  wdt_enable(WDTO_2S);
+  //wdt_enable(WDTO_2S);
 
   // Set all the motor control pins to outputs
   pinMode(in1, OUTPUT);
@@ -67,7 +67,7 @@ void loop() {
   }
 
   accelLoop();
-  wdt_reset();
+  //wdt_reset();
 }
 
 
