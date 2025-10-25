@@ -9,7 +9,8 @@ int address = 0;
 
 //double RADIUS = 0.021;
 //double RADIUS = 0.0188;
-#define RADIUS 663  // mm*10
+//#define RADIUS 663  // mm*10
+#define RADIUS 239 // mm*10
 
 
 LIS331 xl;
@@ -48,7 +49,8 @@ void lowPassFilter(int16_t x, int16_t y, int16_t z) {
   smooth[2] = 4 * smooth[2] / 5 + z * 200;
 }
 
-long adjust(int8_t index, bool setUp) {
+long adjust(int8_t index) {
+//long adjust(int8_t index, bool setUp) {
   // Converts to mm/s/s
   
   // this line returns an adjusted version of the value to be centered and to
@@ -185,7 +187,7 @@ void accelLoop() {
   int16_t x, y, z;
 
   unsigned long timer_temp = micros();
-  if (timer_temp - loop_timer > 100000) { //100000
+  if (timer_temp - loop_timer > 5000) { //100000
     loop_timer = timer_temp;
 
     xl.readAxes(x, y, z);
@@ -196,15 +198,15 @@ void accelLoop() {
     // Lower the cutOff if the angular velocity is greater than half a rotation per second
     //cutOff = w >= PI ? 27500 : 5000;
 
-    long newZ = adjust(2, setUp);
+    long newZ = adjust(2);
     newZ = constrain(newZ, -9810, 9810);
     if (abs(newZ) < cutOff) newZ = 0;
 
-    long newX = adjust(0, setUp);
+    long newX = adjust(0);
     int sign = newX > 0 ? 1 : -1;
     if (abs(newX) < cutOff) newX = 0;
 
-    long newY = adjust(1, setUp);  // acceleration (mm/s/s)
+    long newY = adjust(1);  // acceleration (mm/s/s)
     if (abs(newY) < cutOff) newY = 0;
 
     //test
@@ -215,7 +217,7 @@ void accelLoop() {
 
 
 
-
+    /*
     // Make it so that the angle is not recorded during set up
     if (!setUp) {
       // gPercent = 2 * abs(acos(1 - (abs(newZ) / 9810))) / PI;
@@ -275,6 +277,32 @@ void accelLoop() {
     } else {
       t = micros();
     }
+    */
+
+    //unsigned long inverse_w = (newY) ? 200000 / isqrt((unsigned long)abs(newY)*10000 / RADIUS) : 0;
+    //unsigned long inverse_w = (newY) ? 200000 / isqrt((unsigned long)abs(newY)*10 / RADIUS) : 0; // s/rad * 2 * 100000
+    unsigned long inverse_w = (newY) ? 2000000 / isqrt((unsigned long)abs(newY)*1000 / RADIUS) : 0; // s/rad * 2 * 100000
+    // Times 2 to cancel out /2 in angle calculation
+    // Times 10 to cancel out the mm*10 in RADIUS
+
+    dt = micros() - t;
+    t += dt;
+
+    //unsigned long scaled_dt = dt*100000;
+    unsigned long scaled_dt = dt*1000; // nano seconds
+
+    // 100*(2 * ns / (s/rad * 2 * 100000)) = 100 * rad/s * (s * 1000000000) / 100000 = rad * 100 * 1000000000 / 100000 = rad*1000000 = micro rad
+    currAngle += 100*(((newY == 0 ? 0 : scaled_dt / inverse_w) + (prev_newY == 0 ? 0 : scaled_dt / prev_inv_w)));
+
+    currAngle %= 6283185;
+
+
+    prev_newY = newY;
+    prev_inv_w = inverse_w;
+
+    // testing *3 to make it 1/8 of the circle
+    if (currAngle < 261799*3) digitalWrite(12, HIGH); // 261799 original value (15 degrees)
+    else digitalWrite(12, LOW);
 
     
     Serial.print("newY:");
