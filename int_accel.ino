@@ -4,7 +4,7 @@
 
 #include <EEPROM.h>
 
-int address = 0;
+int address = 48;
 
 
 //double RADIUS = 0.021;
@@ -56,13 +56,14 @@ long adjust(int8_t index) {
   
   // this line returns an adjusted version of the value to be centered and to
   int16_t scale = 18639; // 19620; // 20601; // 2 * g * 1000 * adjust       -> adjust 0.95/1.00/1.05
-  return scale * (2*smooth[index] - max[index] - min[index]) / (2*(max[index] - min[index]));  // 1.05 * g * (2*curr - mid point) / max value
+  return scale * (2*smooth[index] - max[index] - min[index]) / (2*(max[index] - min[index]));  // scale * g * (2*curr - mid point) / max value
   //return ((2 * smooth[index] - max[index] - min[index]) * 20601L) / (2 * (max[index] - min[index]));
   // (2*curr - mid point) / max value     This gets the data in -1<=x<=1 format
   // g is gravity (9.81 m/s/s or 98100 mm/s/s)
   // 1.05 is included to make sure that it is going to 9.81 when facing upward
 }
 
+// Function to set bounds for accel (just gets gravity for each v)
 void setUpMaxMin(bool setUpX, bool setUpY, bool setUpZ) {
   int16_t x, y, z;
 
@@ -250,6 +251,7 @@ void accelLoop() {
     // Lower the cutOff if the angular velocity is greater than half a rotation per second
     //cutOff = w >= PI ? 27500 : 5000;
 
+    // Get corrected values for x, y, z
     long newZ = adjust(2);
     newZ = constrain(newZ, -9810, 9810);
     if (abs(newZ) < cutOff) newZ = 0;
@@ -266,7 +268,18 @@ void accelLoop() {
     //newY = 8000; // 8 m/s/s
     //newY = 500000; // 500 m/s/s
 
-    newY = sqrt(newX*newX+newY*newY);
+    //newY = sqrt(newX*newX+newY*newY);
+
+    // newX = 700050;
+    // newY = 800050;
+
+    long lNewX = newX / 100;
+    long sNewX = newX % 100;
+    long lNewY = newY / 100;
+    long sNewY = newY % 100;
+
+    newY = sqrt(lNewX*lNewX + lNewY*lNewY)*100 + sqrt(sNewX*sNewX + sNewY*sNewY);
+    //newY = isqrt(lNewX*lNewX + lNewY*lNewY)*100 + isqrt(sNewX*sNewX + sNewY*sNewY);
 
     //newY = 300000;
 
@@ -339,6 +352,7 @@ void accelLoop() {
     unsigned long inverse_w = (newY) ? 2000000 / isqrt((unsigned long)abs(newY)*1000 / RADIUS) : 0; // s/rad * 2 * 100000
     // Times 2 to cancel out /2 in angle calculation
     // Times 10 to cancel out the mm*10 in RADIUS
+    // Times 100 in sqrt to make sure numbers are large enough
 
     dt = micros() - t;
     t += dt;
@@ -347,7 +361,10 @@ void accelLoop() {
     unsigned long scaled_dt = dt*1000; // nano seconds
 
     // 100*(2 * ns / (s/rad * 2 * 100000)) = 100 * rad/s * (s * 1000000000) / 100000 = rad * 100 * 1000000000 / 100000 = rad*1000000 = micro rad
-    currAngle += 100*(((newY == 0 ? 0 : scaled_dt / inverse_w) + (prev_newY == 0 ? 0 : scaled_dt / prev_inv_w)));
+    //currAngle += 50*(newY == 0 ? 0 : scaled_dt / inverse_w);
+    //currAngle += 87*(newY == 0 ? 0 : scaled_dt / inverse_w);
+    currAngle += 100*((newY == 0 ? 0 : scaled_dt / inverse_w) + (prev_newY == 0 ? 0 : scaled_dt / prev_inv_w));
+    //currAngle += drift*(((newY == 0 ? 0 : scaled_dt / inverse_w) + (prev_newY == 0 ? 0 : scaled_dt / prev_inv_w)));
 
     currAngle %= 6283185;
 
@@ -383,7 +400,7 @@ void accelLoop() {
   //   // Puts the angular velocity into the EEPROM
   //   //EEPROM.put(address, int(prev_newY));
   //   //EEPROM.put(address, float(temp));
-  //   EEPROM.put(address, int(prev_inv_w));
+  //   EEPROM.put(address, long(prev_inv_w));
   //   // Increments the EEPROM
   //   address += 4;
   // }
