@@ -20,7 +20,8 @@ unsigned long loop_timer = 0;
 
 bool setUp = false;
 // unsigned int cutOff = 2750; // mm/s/s
-unsigned int cutOff = 3500;
+//unsigned int cutOff = 3500;
+unsigned int cutOff = 4000;
 
 unsigned long dt;
 
@@ -54,47 +55,90 @@ long adjust(int8_t index) {
   // Converts to mm/s/s
   
   // this line returns an adjusted version of the value to be centered and to
-  return 20601 * (2*smooth[index] - max[index] - min[index]) / (2*(max[index] - min[index]));  // 1.05 * g * (2*curr - mid point) / max value
+  int16_t scale = 18639; // 19620; // 20601; // 2 * g * 1000 * adjust       -> adjust 0.95/1.00/1.05
+  return scale * (2*smooth[index] - max[index] - min[index]) / (2*(max[index] - min[index]));  // 1.05 * g * (2*curr - mid point) / max value
   //return ((2 * smooth[index] - max[index] - min[index]) * 20601L) / (2 * (max[index] - min[index]));
   // (2*curr - mid point) / max value     This gets the data in -1<=x<=1 format
   // g is gravity (9.81 m/s/s or 98100 mm/s/s)
   // 1.05 is included to make sure that it is going to 9.81 when facing upward
 }
 
-void setUpMaxMin() {
+void setUpMaxMin(bool setUpX, bool setUpY, bool setUpZ) {
   int16_t x, y, z;
 
-  int8_t temp_address = 0;
+  //int8_t temp_address = 0;
 
-  unsigned long timer_temp = micros();
+  unsigned long timer = micros();
+  unsigned long temp_timer = timer;
   int8_t value = 0;
-  int8_t count = 0;
+  long count = 0;
   long average = 0;
   char* type[] = {"Max X", "Min X", "Max Y", "Min Y", "Max Z", "Min Z", "Done!"};
+  Serial.println("");
   Serial.println("Setting Up Max and Mins, start with Max X in 5 sec");
   delay(5000);
   Serial.println(type[value]);
   while(value != 6) {
-    xl.readAxes(x, y, z);
-    lowPassFilter(x, y, z);
 
-    average = (average*count + smooth[value/2])/(++count);
-    if (micros()-timer_temp > 10000000) {
-      Serial.println(average);
-
-      EEPROM.put(temp_address, average);
-      temp_address += 4;
-
-      value++;
-      count = 0;
-      average = 0;
-
-      Serial.print("Switching to ");
-      Serial.print(type[value]);
-      Serial.println(" in 5 sec");
-      delay(5000);
-      timer_temp = micros();
+    // Skip determiner
+    bool dontSetX = (value == 0 || value == 1) && !setUpX;
+    bool dontSetY = (value == 2 || value == 3) && !setUpY;
+    bool dontSetZ = (value == 4 || value == 5) && !setUpZ;
+    if (dontSetX || dontSetY || dontSetZ) {
+      Serial.print("Skipping ");
       Serial.println(type[value]);
+      value++;
+      Serial.println(type[value]);
+      continue;
+    }
+
+    timer = micros();
+    temp_timer = timer;  
+
+    while (true) {
+
+      xl.readAxes(x, y, z);
+      lowPassFilter(x, y, z);
+
+      /*
+      if (micros()-temp_timer > 1000000) {
+        Serial.print("Current val: ");
+        Serial.print(smooth[value/2]);
+        Serial.print(", Current avg: ");
+        Serial.print(average);
+        Serial.print(", Current count: ");
+        Serial.println(count);
+
+        temp_timer += 1000000;
+      }
+      */
+
+      average = (average*count + smooth[value/2])/(++count);
+      if (micros()-timer > 10000000) {
+        Serial.println(average);
+
+        // Size of long is 4 bytes but place every 8 bytes just in case :)
+        EEPROM.put(value*8, average);
+
+        long temp;
+        EEPROM.get(value*8, temp);
+        Serial.println(temp);
+
+        // temp_address += 8;
+
+
+        value++;
+        count = 0;
+        average = 0;
+
+        Serial.print("Switching to ");
+        Serial.print(type[value]);
+        Serial.println(" in 5 sec");
+        delay(5000);
+        //timer = micros();
+        Serial.println(type[value]);
+        break;
+      }
     }
   }
   setUp = false;
@@ -138,18 +182,25 @@ void accelSetup() {
   pinMode(12, OUTPUT);
 
 
-  // Get max and min values form eeprom (also create these values if setup is true)
+  // Get max and min values from eeprom (also create these values if setup is true)
 
-  if (setUp) setUpMaxMin();
+  if (setUp) setUpMaxMin(true, true, true);
   EEPROM.get(0, max[0]);
-  EEPROM.get(4, min[0]);
-  EEPROM.get(8, max[1]);
-  EEPROM.get(12, min[1]);
-  EEPROM.get(16, max[2]);
-  EEPROM.get(20, min[2]);
+  EEPROM.get(8, min[0]);
+  EEPROM.get(16, max[1]);
+  EEPROM.get(24, min[1]);
+  EEPROM.get(32, max[2]);
+  EEPROM.get(40, min[2]);
   //EEPROM.get(0, max);
   //EEPROM.get(12, min);
 
+  // max[0] = -max[0];
+  // min[0] = -min[0];
+  // long temp = max[0];
+  // max[0] = min[0];
+  // min[0] = temp;
+
+  Serial.println("");
   Serial.println(max[0]);
   Serial.println(max[1]);
   Serial.println(max[2]);
@@ -157,6 +208,7 @@ void accelSetup() {
   Serial.println(min[1]);
   Serial.println(min[2]);
 
+  //delay(5000);
 }
 
 void accelLoop() {
@@ -202,6 +254,7 @@ void accelLoop() {
     newZ = constrain(newZ, -9810, 9810);
     if (abs(newZ) < cutOff) newZ = 0;
 
+    //long newX = adjust(0)+2650;
     long newX = adjust(0);
     int sign = newX > 0 ? 1 : -1;
     if (abs(newX) < cutOff) newX = 0;
@@ -213,7 +266,9 @@ void accelLoop() {
     //newY = 8000; // 8 m/s/s
     //newY = 500000; // 500 m/s/s
 
+    newY = sqrt(newX*newX+newY*newY);
 
+    //newY = 300000;
 
 
 
@@ -301,11 +356,14 @@ void accelLoop() {
     prev_inv_w = inverse_w;
 
     // testing *3 to make it 1/8 of the circle
-    if (currAngle < 261799*3) digitalWrite(12, HIGH); // 261799 original value (15 degrees)
+    if (currAngle < 261799) digitalWrite(12, HIGH); // 261799 original value (15 degrees)
     else digitalWrite(12, LOW);
 
-    
-    Serial.print("newY:");
+    // Serial.print("smoothX:");
+    // Serial.print(smooth[0]);
+    Serial.print("newX:");
+    Serial.print(newX);
+    Serial.print(",newY:");
     Serial.print(newY);
     Serial.print(",inverse_w:");
     Serial.print(prev_inv_w);
