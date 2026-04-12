@@ -1,6 +1,4 @@
-struct {
-  int channelData[6];
-} communicationData;
+#include "Communication.h"
 
 int getChannelData(int channelNumber) {
   communicationData.channelData[channelNumber] = IBus.readChannel(channelNumber);

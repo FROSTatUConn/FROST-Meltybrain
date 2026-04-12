@@ -11,8 +11,6 @@
 
 // Miscellaneous definitions
 
-#define RECEIVER_VAL_CEILING 2000
-#define DEADZONE_CONST 75
 #define LED LED_BUILTIN
 
 // Mode definitions
