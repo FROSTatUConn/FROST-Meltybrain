@@ -1,3 +1,7 @@
+#ifndef Arduino_h
+#include <Arduino.h>
+#endif
+
 #ifndef MOTOR_PWM
 #define MOTOR_PWM
 
@@ -14,11 +18,9 @@ typedef enum {
     MAX_FORWARD=1980, MAX_BACKWARD=1020, NEUTRAL=1500
 } std_max_period;
 
-void killMotor(motor_t* motor);
-void mapPeriodTo256(motor_t* motor);
-void driveMotor(motor_t* motor, int percentage, int direction);
-void setMotorPeriod(motor_t* motor, int period);
-void setMotorDirection(motor_t* motor, int direction);
+void stopMotors(motor_t* motor1, motor_t* motor2);
+int mapTimeToAnalogWrite(int u_timing);
+void setMotor(motor_t* motor, int period);
 
 #endif
 
