@@ -18,15 +18,25 @@ FROST Robotics is the official combat robotics club of the University of Connect
   - [ ] Update necessary resources in MD, include derivation
 - [x] Finish accelerometer handling (_input:_ accelerometer i2c ; \
     _output:_ accelerometer data)
+- [ ] Kalman filter for accelerometer + Hall effect encoder?
+  - [ ] Figure out what data to include in sampling for both sensors
+- [ ] Calibrate accelerometer for angular velocity output
+  - [ ] Finish cleaning data and figure out what it tells us!
 - [ ] Finish motor handling (_input:_ motor commands, battery voltage? ; \
     _output:_ None)
 - [x] Finish RC comms handling (_input:_ rx serial ; _output:_ RC controls) 
-- [ ] Other stuff to add
+- [ ] Draw up new state machine model
+- [ ] Other stuff to add, TBD!
 
 #### Hardware
-- [ ] Meltybrain body full CAD
+- [X] Meltybrain body full CAD  __iteration one complete!__
   - At NHRL June 2024, "The Greatest Challenge" uses 10" diameter aluminum pipe\
     fitting (prefab), with little actual machining
+- [ ] Modify PCB Design so that accelerometer can be mounted normally
+- [ ] Research additional methods of movement detection (Hall effect sensor, measure \
+    difference between accelerometer prediction and Hall effect sensor to fit error line?)
+- [ ] Titanium cleats for wheels?
+- [ ] Modify model so that wheels touch the floor even if the bot is "upside down"
 
 ## Useful links/resources
 - _Shift + CTRL + V_ to preview .md in VSCode
