@@ -1,10 +1,10 @@
 #include "Communication.h"
 
-int getChannelData(IBusBM IBus, int channelNumber) {
-  return IBus.readChannel(channelNumber);
+int get_channel_data(IBusBM IBus, int channel_number) {
+  return IBus.readChannel(channel_number);
 }
 
-void getAllChannels(IBusBM IBus, int* channelData) {
-  for (int i = 0; i < 6; i++) channelData[i] = IBus.readChannel(i);
+void get_all_channels(IBusBM IBus, int* channel_data) {
+  for (int i = 0; i < 6; i++) channel_data[i] = IBus.readChannel(i);
 }
 

@@ -26,6 +26,7 @@ FROST Robotics is the official combat robotics club of the University of Connect
     _output:_ None)
 - [x] Finish RC comms handling (_input:_ rx serial ; _output:_ RC controls) 
 - [ ] Draw up new state machine model
+- [ ] Watchdog timer
 - [ ] Other stuff to add, TBD!
 
 #### Hardware

@@ -2,11 +2,13 @@
 #include <IBusBM.h>
 #endif
 
-#ifndef _COMMUNICATION_
-#define _COMMUNICATION_
+#ifndef Communication_h
+#define Communication_h
 
 #define RECEIVER_VAL_CEILING 2000
 #define DEADZONE_CONST 75
+
+#define SAFETY POT_LEFT
 
 typedef struct {
   int channelData[6];
@@ -19,7 +21,6 @@ typedef enum {
 } channel_t;
 
 int getChannelData(IBusBM IBus, int channelNumber);
-void getAllChannels(IBusBM IBus);
-
+void getAllChannels(IBusBM IBus, int* channel_data);
 
 #endif
