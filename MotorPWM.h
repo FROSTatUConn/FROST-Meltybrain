@@ -21,7 +21,7 @@
 //  99% is full forward
 
 //  Do not make direct calls to analogWrite()! Instead, use set_motor and drive_motor
-//  as wrappers
+//  as wrappers for safety purposes
 
 typedef struct Motor {
     int duty_cycle = 75;  //  51-99
@@ -30,7 +30,7 @@ typedef struct Motor {
 } motor_t;
 
 void stop_motors(motor_t* motor1, motor_t* motor2);
-void set_motor(motor_t* motor, int speed_percentage, int direction);
+void set_motor(motor_t* motor, unsigned int spd_percent, int direction);
 void drive_motor(motor_t* motor);
 
 #endif

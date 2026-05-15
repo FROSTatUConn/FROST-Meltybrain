@@ -11,7 +11,9 @@
 #define SAFETY POT_LEFT
 
 typedef struct {
-  int channelData[6];
+  IBusBM IBus;
+  int channels[6];
+  int* (*channel_data)(communication_data_t* comm_data);
 } communication_data_t;
 
 //  Potentiometer outputs go from CCW->CW
@@ -20,7 +22,6 @@ typedef enum {
   RS_X, RS_Y, LS_Y, LS_X, POT_LEFT, POT_RIGHT
 } channel_t;
 
-int getChannelData(IBusBM IBus, int channelNumber);
-void getAllChannels(IBusBM IBus, int* channel_data);
+int* channel_data(communication_data_t* comm_data);
 
 #endif

@@ -9,7 +9,7 @@
 #ifndef Tank_h
 #define Tank_h
 
-void driveTank(motor_t* motor1, motor_t* motor2);
+void drive_tank(motor_t* motor1, motor_t* motor2);
 
 
 #endif

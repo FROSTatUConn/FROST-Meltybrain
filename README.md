@@ -30,7 +30,7 @@ FROST Robotics is the official combat robotics club of the University of Connect
 - [ ] Other stuff to add, TBD!
 
 #### Hardware
-- [X] Meltybrain body full CAD  __iteration one complete!__
+- [X] Meltybrain body full CAD --> __iteration one complete!__
   - At NHRL June 2024, "The Greatest Challenge" uses 10" diameter aluminum pipe\
     fitting (prefab), with little actual machining
 - [ ] Modify PCB Design so that accelerometer can be mounted normally

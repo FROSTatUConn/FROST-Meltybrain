@@ -10,7 +10,7 @@
 
 //  Maps a given speed percentage and direction to appropriate 
 //  duty cycle for ESC and updates motor struct
-void set_motor(motor_t* motor, int spd_percent, int dir) {
+void set_motor(motor_t* motor, unsigned int spd_percent, int dir) {
     int duty_cycle = 75;
     if (dir == 0) {
         motor->duty_cycle = duty_cycle;

@@ -1,13 +1,18 @@
 #include <Arduino.h>
-#include "Tank.h"
 #include <Watchdog.h>
+#include "State.h"
 
 #define MOTOR_1_PIN 69420
 #define MOTOR_2_PIN 7337
 
 Watchdog watchdog;
+communication_data_t* comms;
+state_manager_t state_manager;
 
 void setup() {
+    comms->IBus.begin(Serial);  //  Start up comms
+    Serial.begin(115200);
+
     motor_t motor1;
     set_motor(&motor1, 0, 0);
     motor1.pin = MOTOR_1_PIN;
@@ -22,7 +27,7 @@ void setup() {
 void loop() {
     watchdog.reset();
 
-    
+
 
 
 
