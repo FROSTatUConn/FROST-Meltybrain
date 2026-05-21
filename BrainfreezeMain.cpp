@@ -12,6 +12,8 @@ state_manager_t state_manager;
 void setup() {
     comms->IBus.begin(Serial);  //  Start up comms
     Serial.begin(115200);
+    pinMode(MOTOR_1_PIN, OUTPUT);
+    pinMode(MOTOR_2_PIN, OUTPUT);
 
     motor_t motor1;
     set_motor(&motor1, 0, 0);
@@ -27,7 +29,7 @@ void setup() {
 void loop() {
     watchdog.reset();
 
-
+    
 
 
 

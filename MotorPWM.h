@@ -5,7 +5,7 @@
 #ifndef Motor_PWM_h
 #define Motor_PWM_h
 
-#define ANALOG_RESOLUTION 255
+#define MOTOR_PWM_ANALOG_RESOLUTION 255
 
 //  Header for PWM Implementation of Motor Control for ReadyToSky BLHELI32 ESC
 

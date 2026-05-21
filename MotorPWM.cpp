@@ -39,7 +39,7 @@ void stop_motors(motor_t* motor1, motor_t* motor2) {
 void drive_motor(motor_t* motor) {
     //  TODO: Add safety check to here, call stop_motors() if failed
     if (motor->direction != 0) {
-        analogWrite(motor->pin, (int)((((double)motor->duty_cycle/100.))*ANALOG_RESOLUTION));
+        analogWrite(motor->pin, (int)((((double)motor->duty_cycle/100.))*MOTOR_PWM_ANALOG_RESOLUTION));
     } else {
         motor->duty_cycle = 75;
         analogWrite(motor->pin, motor->duty_cycle);
